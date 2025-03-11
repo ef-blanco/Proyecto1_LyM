@@ -1,0 +1,481 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */
+
+options 
+{
+	LOOKAHEAD=2; 
+	IGNORE_CASE=true;
+	STATIC = false;
+}
+   
+
+PARSER_BEGIN(Robot)
+
+package proyecto;
+ 
+import java.awt.Point;
+import java.io.*;
+import java.util.Vector;
+import java.util.LinkedList;
+import java.awt.Point;
+import java.util.ArrayList;
+
+@SuppressWarnings("serial")
+public class Robot 
+{
+    
+    private ArrayList<String> VARIABLES_FOR_G = new ArrayList<>();
+
+    private ArrayList<String> PROCS_FOR_G = new ArrayList<>();
+
+    String salida_robot = new String();
+}
+
+
+PARSER_END(Robot)
+
+
+SKIP:
+{
+    " "    
+    | "\r" 
+    | "\t" 
+    | "\n" 
+}
+
+
+TOKEN: /* Comandos */
+{
+        <PK: "PICK"> |
+        <FOR_PAR: "|"> |
+        <CPK: "CANPICK"> |
+        <WH: "WITH"> |
+        <DOT: "."> |
+        <JP: "JUMP"> |
+        <NH: "#NORTH"> |
+        <CJP: "CANJUMP"> |
+        <BK: "#BACK"> |
+        < FT: "#FRONT" > |
+        <TN: "THEN"> |
+        <MV: "MOVE"> |
+        <GO: "GO"> |
+        <TOTHE: "TOTHE"> |
+        <CIE2: "]"> |
+        <PROC: "PROC"> |
+        <SH: "#SOUTH"> |
+        <ELSE: "ELSE"> |
+        <BALLOONS: "#BALLOONS"> |
+        <IF: "IF"> |
+        <INDIR: "INDIR"> |
+        <HOP: "HOP"> |
+        <OTE: "OFTYPE"> |
+        <PUT: "PUT"> |
+        <RPT: "REPEAT"> |
+        <TURN: "TURN"> |
+        <CIE1: "["> |
+        <FG: "FACING"> |
+        <WHILE: "WHILE"> |
+        <DO: "DO"> |
+        <LT: "#LEFT"> |
+        <CP: "CANPUT"> |
+        <RT: "#RIGHT"> |
+        <CMV: "CANMOVE"> |
+        <WT: "#WEST"> |
+}
+
+TOKEN :
+{
+		<NUMBER: (<DIGIT>)+ >
+		| < WORD: (< LETTER >)+ >
+		| <#DIGIT: ["0"-"9"] >
+		| < #LETTER: ["a"-"z"] >
+		
+        
+}
+
+
+
+//boolean command(uniandes.lym.robot.view.Console sistema) :
+boolean command(Console sistema):
+{	
+    int x, y;
+    salida_robot = new String();
+    boolean respuesta_program = true;
+}
+
+{
+    parametros_funcion(true) (respuesta_program = BLOQUE(true, 1)|respuesta_program = crear_procs_n())*
+    
+    {
+        try {
+          
+            Thread.sleep(900);
+        } catch (InterruptedException e) {
+
+            System.err.format("Execution interrupted: %s%n", e);
+        }
+
+        sistema.printOutput(respuesta_program ? "Ejecución exitosa":"Error de variables");
+        return true;
+    }
+
+    |
+
+    <EOF> { return false; }
+}
+
+void GET_FOR_F(int f): { 
+} 
+{
+    ( 
+        <CHIPS> { .pickChips(f);} 
+    )
+    | 
+    ( 
+        <BALLOONS> { .grabBalloons(f); } 
+    )  
+}
+
+int GET_CONDICIONESS(): { 
+} 
+{
+    ( 
+        <CHIPS> { if (.chipExists()) { return .chipsToPick(); } else { return 0; } } 
+    )
+    | 
+    ( 
+        <BALLOONS> { return .countBalloons(); } 
+    )  
+}
+
+boolean CREAR_VARIABLES(): { 
+} 
+{
+    <WORD> { if (!PROCS_FOR_G.contains(token.image)) { return false; } else { return true; } } "."
+}
+
+boolean CREAR_VARIABLES1(ArrayList<String> LOCALES_VARIABLE): { 
+} 
+{
+    <WORD> ":=" 
+    ( 
+        <NUMBER> 
+        | 
+        <WORD> { if (!VARIABLES_FOR_G.contains(token.image) && !LOCALES_VARIABLE.contains(token.image)) { return false; } else { return true; } } 
+    ) 
+    "."
+}
+
+void PUT_FOR_F(int f): { 
+} 
+{
+    ( 
+        <CHIPS> { .putChips(f); } 
+    )
+    | 
+    ( 
+        <BALLOONS> { .putBalloons(f); } 
+    )  
+}
+
+int PUT_CONDICIONESS(int x): { 
+} 
+{
+    ( 
+        <CHIPS> { if (.freeSpacesForChips() > x) { return .getMyChips(); } else { return Integer.MAX_VALUE; } } 
+    )
+    | 
+    ( 
+        <BALLOONS> { return .getMyBalloons(); } 
+    )  
+}
+
+boolean BLOQUE(boolean respuesta_program, int x): { 
+    boolean respuesta_f = true; 
+} 
+{
+    <CIE1> (respuesta_f = cmmds(respuesta_program, x) | ciclos_y_estructuras() | respuesta_f = CREAR_VARIABLES())* <CIE2>
+    { 
+        return respuesta_f; 
+    }
+}
+
+boolean BLOQUE1(boolean respuesta_program, int x, ArrayList<String> LOCALES_VARIABLE): { 
+    boolean respuesta_f = true; 
+} 
+{
+    <CIE1> parametros_funcion(false) 
+    (respuesta_f = cmmds1(false, 0, LOCALES_VARIABLE) | ciclos_y_estructuras() | respuesta_f = CREAR_VARIABLES1(LOCALES_VARIABLE))* 
+    <CIE2>
+    { 
+        return respuesta_f; 
+    }
+}
+
+boolean crear_procs_n(): { 
+    ArrayList<String> LOCALES_VARIABLE = new ArrayList<>(); 
+    boolean respuesta_program = true; 
+} 
+{
+    < PROC > 
+    <WORD> { PROCS_FOR_G.add(token.image); } 
+
+    (
+
+        <two_p> <WORD> { LOCALES_VARIABLE.add(token.image); } 
+        (<WORD> { LOCALES_VARIABLE.add(token.image); } <two_p> <WORD> { LOCALES_VARIABLE.add(token.image); })*
+        | 
+        { } 
+    )
+
+
+    respuesta_program = BLOQUE1(true, 0, LOCALES_VARIABLE)
+    { 
+        return respuesta_program; 
+    }
+}
+
+void ciclos_y_estructuras():
+{
+    boolean respuesta_program  = true;
+    int x;
+}
+{
+    < IF > <two_p> (respuesta_program = condicionnes_negadas() | respuesta_program=condicioness()) < TN ><two_p> BLOQUE(respuesta_program, 1) < ELSE ><two_p> BLOQUE(!respuesta_program, 1)
+    
+    | < WHILE > <two_p> (respuesta_program = condicionnes_negadas() | respuesta_program=condicioness()) < DO ><two_p> BLOQUE(respuesta_program, 1)	
+
+    | < FOR ><two_p> x=num() < RPT ><two_p> BLOQUE(true, x)
+}
+
+boolean condicionnes_negadas():
+{
+    boolean respuesta_program = true;
+}
+{
+    < NOT > <two_p> ( respuesta_program = condicionnes_negadas() | respuesta_program= condicioness() )
+
+    { return !respuesta_program; }
+}
+
+boolean condicioness(): {
+    boolean respuesta_program = true;  
+    int x;  
+    int y;  
+    int orn; 
+}
+{
+    (
+        
+        <FG> <two_p> ( 
+            <NH>  
+            | <SH>  
+            | <WT>  
+            | <ET>  
+        ) { respuesta_program = true; }
+
+       
+        | <CP> <two_p> x = num() <OTE> <two_p> y = PUT_CONDICIONESS(x) 
+        { 
+            respuesta_program = (x > y);
+        }  
+
+        
+        | <CPK> <two_p> x = num() <OTE> <two_p> y = GET_CONDICIONESS() 
+        { 
+            respuesta_program = (x > y);
+        }
+
+        
+        | <CMV> <two_p> x = num()
+            ( <INDIR> <two_p> 
+                ( 
+                    <NH> 
+                    | <SH> 
+                    | <ET> 
+                    | <WT> 
+                )
+            | <TOTHE> <two_p>
+                (
+                    <FT> 
+                    | <RT>  
+                    | <BK>  
+                    | <LT>  
+                )
+                
+            )    
+
+        
+        | <CJP> <two_p> x = num()
+            ( <INDIR> <two_p> 
+                ( 
+                    <NH> 
+                    | <SH> 
+                    | <ET>  
+                    | <WT>  
+                )
+            | <TOTHE> <two_p> 
+                (
+                    <FT> ; }
+                    | <RT>  
+                    | <BK>  
+                    | <LT>  
+                )
+                
+            )
+    ) 
+
+    { return respuesta_program; } 
+}
+
+
+	boolean cmmds(boolean IF_ACTIVADO, int cant_for):
+	{
+	  int x;
+	  int y;
+	  int fcg_rels;
+	  boolean respuesta_program  = true;
+	}
+	
+	{
+	    (
+	      
+	    < MV > <two_p> (x=num() | < WORD > {x=0; if (!VARIABLES_FOR_G.contains(token.image)) { respuesta_program =  false; } else {respuesta_program= true; } })
+	        ( < TOTHE > <two_p>
+	               ( < FT > 
+	               | < BK > 
+	               | < RT > 
+	               | < LT > 
+	               )
+	          | < INDIR > <two_p>
+	               ( < NH > 
+	               | < SH > 
+	               | < WT > 
+	               | < ET > 
+	               ) 
+	        ) 
+	     | < JP > <two_p> (x=num() | < WORD > {x=0; if (!VARIABLES_FOR_G.contains(token.image)) { respuesta_program =  false; } else {respuesta_program= true; } })
+	        ( < TOTHE > <two_p>
+	               ( < FT > 
+	               | < BK > 
+	               | < RT > 
+	               | < LT > 
+	               )
+	         | < INDIR > <two_p>
+	               ( < NH > 
+	               | < SH > 
+	               | < WT > 
+	               | < ET > 
+	               ) 
+	        )
+
+	  | < NOP >
+	  | < GOW > <two_p> (x=num() | < WORD > {x=1; if (!VARIABLES_FOR_G.contains(token.image)) { respuesta_program =  false; } else {respuesta_program= true; } })
+	      				< WH > <two_p> (y=num() | < WORD > {y=1; if (!VARIABLES_FOR_G.contains(token.image)) { respuesta_program =  false; } else {respuesta_program= true; } }) {  .setPostion(x, y); } } }
+	    | < TURN > <two_p> ( < RT > 
+	    				| < LT > 
+	    				| < AROUND > 
+	    				) 
+	    | < FACE > <two_p> ( < NH > 
+	                     | < SH > 
+	                     | < WT > 
+	                     | < ET > 
+	                   )
+	    | < PUT > <two_p> (x=num() | < WORD > 
+	    | < PK > <two_p> (x=num() | < WORD > 
+	 	) < DOT >
+	 	
+	 { return respuesta_program; }
+	}
+
+
+	boolean cmmds1(boolean IF_ACTIVADO, int cant_for, ArrayList<String > LOCALES_VARIABLE):
+	{
+	  int x;
+	  int y;
+	  int fcg_rels;
+	  boolean respuesta_program = true;
+	}
+	
+	{
+	    (
+	      
+	    < MV > <two_p> (x=num() | < WORD >  { respuesta_program =  false; } else {respuesta_program= true; } })
+	        ( < TOTHE > <two_p>
+	               ( < FT > 
+	               | < BK > 
+	               | < RT > 
+	               | < LT > 
+	               )
+	          | < INDIR > <two_p>
+	               ( < NH > 
+	               | < SH > 
+	               | < WT > 
+	               | < ET > 
+	               ) 
+	         |  
+	        ) 
+	     | < JP > <two_p> (x=num() | < WORD > 
+	        ( < TOTHE > <two_p>
+	               ( < FT > 
+	               | < BK > 
+	               | < RT > 
+	               | < LT > 
+	               )
+	         | < INDIR > <two_p>
+	               ( < NH > 
+	               | < SH > 
+	               | < WT > 
+	               | < ET > 
+	               ) 
+	        )
+
+	  | < NOP >
+	  | < GOW > <two_p> (x=num() | < WORD > {x=1; if (!VARIABLES_FOR_G.contains(token.image) && !LOCALES_VARIABLE.contains(token.image)) { respuesta_program =  false; } else {respuesta_program= true; } })
+	      				< WH > <two_p> (y=num() | < WORD > 
+	    | < TURN > <two_p> ( < RT > 
+	    				| < LT > 
+	    				| < AROUND > 
+	    				) 
+	    | < FACE > <two_p> ( < NH > 
+	                     | < SH > 
+	                     | < WT > 
+	                     | < ET > 
+	                   )
+	    | < PUT > <two_p> (x=num() | < WORD >  
+	    | < PK > <two_p> (x=num() | < WORD >  
+	  ) < DOT >
+    }
+
+
+	
+
+void parametros_funcion(boolean global):
+{ 
+} 
+{
+    <FOR_PAR> 
+    ( 
+        <WORD>   
+    )* 
+    <FOR_PAR>
+}
+
+int num() throws Error:
+{ 
+    int total = 1; 
+} 
+{
+    <NUMBER>
+    {
+        try {
+            total = Integer.parseInt(token.image);
+        } catch (NumberFormatException ee) {
+            throw new Error("Número invalido");
+        }
+        return total;
+    }
+}
+
+	
