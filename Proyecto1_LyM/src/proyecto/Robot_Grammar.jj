@@ -81,7 +81,7 @@ TOKEN: /* Comandos */
         <CP: "CANPUT"> |
         <RT: "#RIGHT"> |
         <CMV: "CANMOVE"> |
-        <WT: "#WEST"> |
+        <WT: "#WEST">
 }
 
 TOKEN :
